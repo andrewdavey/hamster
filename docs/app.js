@@ -10,6 +10,7 @@ if ("serviceWorker" in navigator) {
 }
 
 const STORAGE_KEY = "hamsterLastFed";
+const PREVIOUS_STORAGE_KEY = "hamsterLastFedPrevious";
 
 function toDateString(date) {
   // Returns YYYY-MM-DD in local time
@@ -46,8 +47,10 @@ function updateUI() {
   const statusHeading = document.getElementById("status-heading");
   const statusDetail = document.getElementById("status-detail");
   const feedBtn = document.getElementById("feed-btn");
+  const undoBtn = document.getElementById("undo-btn");
   const lastFedCard = document.getElementById("last-fed-card");
   const lastFedDate = document.getElementById("last-fed-date");
+  const previousLastFed = localStorage.getItem(PREVIOUS_STORAGE_KEY);
 
   if (!lastFed) {
     // No record yet
@@ -57,7 +60,8 @@ function updateUI() {
     statusDetail.textContent =
       "Record when the hamster was last fed to get started.";
     feedBtn.textContent = "Record fed today";
-    feedBtn.style.display = "block";
+    feedBtn.style.display = "inline-block";
+    undoBtn.style.display = "none";
     lastFedCard.style.display = "none";
     return;
   }
@@ -77,7 +81,8 @@ function updateUI() {
       statusDetail.textContent = `Overdue! Last fed ${daysSince} days ago.`;
     }
     feedBtn.textContent = "Record feeding now";
-    feedBtn.style.display = "block";
+    feedBtn.style.display = "inline-block";
+    undoBtn.style.display = "none";
   } else {
     // Fed recently, next feeding is in (2 - daysSince) days
     statusCard.className = "card status-fed";
@@ -88,9 +93,11 @@ function updateUI() {
     if (daysSince === 0) {
       statusHeading.textContent = "Fed today!";
       statusDetail.textContent = `Next feeding: ${formatDisplay(nextFedStr)}`;
+      undoBtn.style.display = "inline-block";
     } else {
       statusHeading.textContent = "Not needed today";
       statusDetail.textContent = `Next feeding: ${formatDisplay(nextFedStr)}`;
+      undoBtn.style.display = "none";
     }
     feedBtn.style.display = "none";
   }
@@ -98,7 +105,18 @@ function updateUI() {
 
 function recordFeeding() {
   const today = toDateString(new Date());
+  const current = localStorage.getItem(STORAGE_KEY);
+
+  if (current && current !== today) {
+    localStorage.setItem(PREVIOUS_STORAGE_KEY, current);
+  }
+
   localStorage.setItem(STORAGE_KEY, today);
+  updateUI();
+}
+
+function undoFeeding() {
+  localStorage.removeItem(STORAGE_KEY);
   updateUI();
 }
 
